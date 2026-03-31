@@ -1,0 +1,253 @@
+<link rel="stylesheet" href="/static/style.css">
+
+<style>
+.back-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    background: black;
+    color: white;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 16px;
+    border: 3px solid white;
+    cursor: pointer;
+    overflow: hidden;
+    z-index: 9999;
+}
+.back-btn::before {
+    content:"";
+    position:absolute;
+    inset:-2px;
+    background: linear-gradient(45deg, red, orange, yellow, green, cyan, blue, purple, red);
+    background-size:400%;
+    filter:blur(6px);
+    z-index:-1;
+    animation: rgb 5s linear infinite;
+    border-radius:12px;
+}
+.back-btn:hover { background-color:#222; }
+
+@keyframes rgb {
+    0% { background-position:0 0; }
+    50% { background-position:300% 0; }
+    100% { background-position:0 0; }
+}
+
+#result {
+    font-size: 22px;
+    margin-top: 20px;
+}
+
+#instruction {
+    font-size: 18px;
+    margin-bottom: 20px;
+}
+</style>
+
+</head>
+<body>
+
+<audio id="music" loop autoplay></audio>
+
+<a href="/menu" class="back-btn">Volver al Menú</a>
+
+<div class="container">
+    <h1>Clicks</h1>
+
+    <p id="instruction">Al darle click al cuadrado blanco empieza la prueba</p>
+
+    <p id="c">0</p>
+
+    <!-- CUADRADO -->
+    <div id="clickBox" onclick="startOrClick()" 
+    style="width:200px;height:200px;background:white;margin:auto;cursor:pointer;border:2px solid black;">
+    </div>
+
+    <!-- BOTÓN REINICIAR -->
+    <button onclick="resetTest()" class="btn" style="margin-top:15px;">
+        Reiniciar prueba
+    </button>
+
+    <p id="result"></p>
+</div>
+
+<script>
+let c = 0;
+let running = false;
+let started = false;
+
+let lastClickTime = 0;
+let intervals = [];
+let clickTimes = [];
+let mouseMoved = false;
+
+document.addEventListener("mousemove", () => {
+    mouseMoved = true;
+});
+
+function startOrClick(){
+    if(!started){
+        start();
+        started = true;
+        return;
+    }
+    add();
+}
+
+function start(){
+    c = 0;
+    running = true;
+
+    lastClickTime = 0;
+    intervals = [];
+    clickTimes = [];
+    mouseMoved = false;
+
+    document.getElementById("result").textContent = "";
+    document.getElementById("c").innerText = "0";
+
+    setTimeout(()=>{
+
+        running = false;
+
+        let result = document.getElementById("result");
+
+        let cps = clickTimes.length / 10;
+
+        let avg = intervals.length ? intervals.reduce((a,b)=>a+b,0)/intervals.length : 0;
+
+        let variance = 0;
+        if(intervals.length){
+            let deviations = intervals.map(i => Math.abs(i - avg));
+            variance = deviations.reduce((a,b)=>a+b,0) / deviations.length;
+        }
+
+        let fastIntervals = intervals.filter(i => i < 50).length;
+
+        let scoreSus = 0;
+        let reasons = [];
+
+        if (cps > 18) {
+            scoreSus += 3;
+            reasons.push("CPS alto");
+        } else if (cps > 14) {
+            scoreSus += 1;
+        }
+
+        if (c >= 200) {
+            scoreSus += 3;
+            reasons.push("Clicks irreales");
+        }
+
+        if (intervals.length > 5 && variance < 80) {
+            scoreSus += 3;
+            reasons.push("Intervalos muy uniformes");
+        } else if (variance < 150) {
+            scoreSus += 1;
+        }
+
+        if (fastIntervals > 10) {
+            scoreSus += 3;
+            reasons.push("Ráfaga de clicks rápidos");
+        }
+
+        if (intervals.length > 6) {
+            let pattern = true;
+            for (let i = 2; i < intervals.length; i++) {
+                if (Math.abs(intervals[i] - intervals[i-1]) > 100) {
+                    pattern = false;
+                    break;
+                }
+            }
+            if (pattern) {
+                scoreSus += 2;
+                reasons.push("Patrón repetitivo");
+            }
+        }
+
+        if (!mouseMoved && c > 60) {
+            scoreSus += 2;
+            reasons.push("Sin interacción del mouse");
+        }
+
+        let score = Math.min(100, c);
+        let auto = scoreSus >= 6;
+
+        if(auto){
+            score = 0;
+            result.textContent =
+                "⚠️ Actividad automatizada detectada\n" +
+                "Motivos: " + reasons.join(", ") +
+                "\nPuntaje: 0 / 100";
+        } else {
+            result.textContent = "Puntaje: " + score + " / 100";
+        }
+
+        // ✅ CORRECCIÓN AQUÍ (POST JSON hacia Flask)
+        fetch('/save/clicks', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                score: score,
+                clicks: c,
+                intervals: intervals
+            })
+        });
+
+    },10000);
+}
+
+function add(){
+    if(running){
+        let now = Date.now();
+        let diff = now - lastClickTime;
+
+        if(lastClickTime !== 0){
+            intervals.push(diff);
+        }
+
+        lastClickTime = now;
+
+        clickTimes.push(now);
+        clickTimes = clickTimes.filter(t => now - t <= 1000);
+
+        c++;
+        document.getElementById("c").innerText = c;
+    }
+}
+
+function resetTest(){
+    c = 0;
+    running = false;
+    started = false;
+
+    lastClickTime = 0;
+    intervals = [];
+    clickTimes = [];
+    mouseMoved = false;
+
+    document.getElementById("c").innerText = "0";
+    document.getElementById("result").textContent = "";
+}
+
+const audio = document.getElementById("music");
+const chosenSong = localStorage.getItem("chosenSong");
+
+if(chosenSong){
+    audio.src = chosenSong;
+    audio.play();
+}
+
+function chooseSong(song){
+    localStorage.setItem("chosenSong", song);
+    audio.src = song;
+    audio.play();
+}
+</script>
+
+</body>

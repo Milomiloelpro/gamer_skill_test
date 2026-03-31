@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Memoria de Colores</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+/* Contenedor centrado */
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    text-align: center;
+    position: relative;
+}
+
+/* Display del color */
+#color-display {
+    width: 200px;
+    height: 200px;
+    margin: 20px auto;
+    display: block; /* 🔥 antes estaba en none */
+    border: 3px solid white;
+    border-radius: 10px;
+    background: transparent; /* 🔥 vacío por defecto */
+}
+
+/* Botones de colores */
+#buttons {
+    display: flex;
+    gap: 20px;
+    margin-top: 30px;
+}
+.color-btn {
+    width: 60px;
+    height: 60px;
+    border: 3px solid white;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+.color-btn:hover { transform: scale(1.2); }
+
+/* Botón comenzar */
+#start-btn {
+    margin-top: 30px;
+    padding: 10px 25px;
+    font-size: 18px;
+    background: black;
+    color: white;
+    border-radius: 10px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+#start-btn::before {
+    content:"";
+    position:absolute;
+    inset:-2px;
+    background: linear-gradient(45deg, red, orange, yellow, green, cyan, blue, purple, red);
+    background-size:400%;
+    filter:blur(6px);
+    z-index:-1;
+    animation: rgb 5s linear infinite;
+    border-radius:12px;
+}
+@keyframes rgb {
+    0% { background-position:0 0; }
+    50% { background-position:300% 0; }
+    100% { background-position:0 0; }
+}
+
+/* Botón volver al menú con luces RGB */
+.back-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    background: black;
+    color: white;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 16px;
+    border: 3px solid white;
+    cursor: pointer;
+    overflow: hidden;
+    z-index: 9999;
+}
+.back-btn::before {
+    content:"";
+    position:absolute;
+    inset:-2px;
+    background: linear-gradient(45deg, red, orange, yellow, green, cyan, blue, purple, red);
+    background-size:400%;
+    filter:blur(6px);
+    z-index:-1;
+    animation: rgb 5s linear infinite;
+    border-radius:12px;
+}
+.back-btn:hover { background-color:#222; }
+
+#countdown { font-size: 30px; margin-top:10px; }
+#result { font-size: 20px; margin-top:20px; }
+</style>
+</head>
+<body>
+<audio id="music" loop autoplay></audio>
+
+<!-- Botón volver -->
+<a href="/menu" class="back-btn">Volver al Menú</a>
+
+<div class="container">
+    <h1>Memoria de Colores</h1>
+    <div id="countdown"></div>
+    <div id="color-display"></div>
+
+    <div id="buttons">
+        <button class="color-btn" id="blue" style="background:blue;"></button>
+        <button class="color-btn" id="red" style="background:red;"></button>
+        <button class="color-btn" id="green" style="background:green;"></button>
+        <button class="color-btn" id="yellow" style="background:yellow;"></button>
+        <button class="color-btn" id="orange" style="background:orange;"></button>
+        <button class="color-btn" id="purple" style="background:purple;"></button>
+        <button class="color-btn" id="pink" style="background:pink;"></button>
+        <button class="color-btn" id="cyan" style="background:cyan;"></button>
+        <button class="color-btn" id="lime" style="background:lime;"></button>
+        <button class="color-btn" id="brown" style="background:brown;"></button>
+    </div>
+
+    <button id="start-btn">Comenzar</button>
+    <p id="result"></p>
+</div>
+
+<script>
+const colors = ["blue","red","green","yellow","orange","purple","pink","cyan","lime","brown"];
+let sequence = [];
+let userSequence = [];
+let level = 0;
+let showing = false;
+
+const countdownEl = document.getElementById("countdown");
+const display = document.getElementById("color-display");
+const result = document.getElementById("result");
+
+function getScore(level){ return level*10; } // Puntajes de 10 en 10
+
+function showSequence(){
+    showing = true;
+    userSequence = [];
+    let i = 0;
+
+    function showNext(){
+        if(i>=sequence.length){
+            showing=false;
+            countdownEl.textContent="Repite la secuencia";
+            display.style.background = "transparent"; // 🔥 en vez de ocultar
+            return;
+        }
+
+        const color = sequence[i];
+        display.style.background = color;
+
+        countdownEl.textContent = "";
+
+        setTimeout(()=>{
+            display.style.background = "transparent"; // 🔥 no desaparece, solo se limpia
+            setTimeout(()=>{ i++; showNext(); },400);
+        },1250);
+    }
+    showNext();
+}
+
+function nextLevel(){
+    if(level>=10) return;
+    level++;
+    const randomColor = colors[Math.floor(Math.random()*colors.length)];
+    sequence.push(randomColor);
+    showSequence();
+}
+
+document.getElementById("start-btn").onclick=function(){
+    sequence=[]; level=0; result.textContent="";
+    nextLevel();
+};
+
+document.querySelectorAll(".color-btn").forEach(btn=>{
+    btn.onclick=function(){
+        if(showing) return;
+
+        userSequence.push(btn.id);
+
+        if(btn.id!==sequence[userSequence.length-1]){
+            let score = getScore(level-1);
+            result.textContent="❌ Perdiste | Puntaje: "+score+" / 100";
+            sequence=[];
+            fetch('/save/memory/'+score); // guardar puntaje en tu perfil
+            return;
+        }
+
+        if(userSequence.length===sequence.length){
+            if(level===10){
+                result.textContent="🏆 PERFECTO 100 / 100";
+                sequence=[];
+                fetch('/save/memory/100'); // guardar puntaje máximo
+                return;
+            }
+            setTimeout(nextLevel,1000);
+        }
+    };
+});
+const audio = document.getElementById("music");
+const chosenSong = localStorage.getItem("chosenSong");
+
+// Solo reproducir si ya hay una canción elegida
+if(chosenSong){
+    audio.src = chosenSong;
+    audio.play();
+}
+
+// Función para elegir canción
+function chooseSong(song){
+    localStorage.setItem("chosenSong", song);
+    audio.src = song;
+    audio.play();
+}
+</script>
+
+</body>
+</html>

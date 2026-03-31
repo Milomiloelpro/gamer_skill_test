@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Prueba de Reacción</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+body {
+    margin: 0;
+    background: black;
+    color: white;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+.container {
+    text-align: center;
+    position: relative;
+}
+
+/* Botón volver al menú con luces RGB */
+.back-btn {
+    position: fixed;      /* siempre arriba */
+    top: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    background: black;
+    color: white;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 16px;
+    border: 3px solid white;
+    cursor: pointer;
+    overflow: hidden;
+    z-index: 9999;
+}
+
+/* Animación RGB en el borde */
+.back-btn::before {
+    content:"";
+    position:absolute;
+    inset:-2px;
+    background: linear-gradient(45deg, red, orange, yellow, green, cyan, blue, purple, red);
+    background-size:400%;
+    filter:blur(6px);
+    z-index:-1;
+    animation: rgb 5s linear infinite;
+    border-radius:12px;
+}
+
+.back-btn:hover { background-color:#222; }
+
+/* Animación clave RGB */
+@keyframes rgb {
+    0% { background-position:0 0; }
+    50% { background-position:300% 0; }
+    100% { background-position:0 0; }
+}
+
+/* Cuadrado de reacción */
+#target {
+    width: 100px;
+    height: 100px;
+    background: red;
+    margin: 30px auto;
+    display: block;
+    cursor: pointer;
+    border-radius: 10px;
+}
+
+/* Botón iniciar */
+#start-btn {
+    padding: 12px 25px;
+    font-size: 18px;
+    background: black;
+    color: white;
+    border: 3px solid red;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-top: 20px;
+    position: relative;
+}
+#start-btn:hover {
+    transform: scale(1.05);
+}
+
+#result { margin-top: 15px; font-size: 20px; }
+</style>
+</head>
+<body>
+<audio id="music" loop autoplay></audio>
+
+<a href="/menu" class="back-btn">Volver al Menú</a>
+
+<div class="container">
+    <h1>Prueba de Reacción</h1>
+    <p>Presiona el cuadrado <strong>cuando se ponga verde</strong></p>
+
+    <div id="target"></div>
+    <button id="start-btn">Comenzar</button>
+    <p id="result"></p>
+</div>
+
+<script>
+const target = document.getElementById("target");
+const startBtn = document.getElementById("start-btn");
+const result = document.getElementById("result");
+
+let startTime = 0;
+let green = false;
+let timeout;
+
+// Al hacer click en “Comenzar”
+startBtn.onclick = function() {
+    result.textContent = "";
+    green = false;
+    target.style.background = "red";
+
+    const delay = Math.random() * 2000 + 1000; // 1 a 3 segundos
+
+    timeout = setTimeout(() => {
+        target.style.background = "green";
+        startTime = Date.now();
+        green = true;
+    }, delay);
+};
+
+// Al presionar el cuadrado
+target.onclick = function() {
+    if(!green){
+        result.textContent = "¡Presionaste antes de tiempo! Espera a que se ponga verde.";
+        clearTimeout(timeout);
+        target.style.background = "red";
+        return;
+    }
+
+    const reaction = Date.now() - startTime; // tiempo en ms
+    let score;
+
+    if(reaction <= 120) score = 100;
+    else if(reaction <= 180) score = 80;
+    else if(reaction <= 250) score = 60;
+    else if(reaction <= 320) score = 40;
+    else if(reaction <= 400) score = 20;
+    else score = 0;
+
+    result.textContent = `Puntaje: ${score} / 100`;
+
+    // Guardar puntaje en la base de datos
+    fetch(`/save/reaction/${score}`);
+
+    // Reset cuadrado
+    target.style.background = "red";
+    green = false;
+};
+const audio = document.getElementById("music");
+const chosenSong = localStorage.getItem("chosenSong");
+
+// Solo reproducir si ya hay una canción elegida
+if(chosenSong){
+    audio.src = chosenSong;
+    audio.play();
+}
+
+// Función para elegir canción
+function chooseSong(song){
+    localStorage.setItem("chosenSong", song);
+    audio.src = song;
+    audio.play();
+}
+</script>
+
+</body>
+</html>

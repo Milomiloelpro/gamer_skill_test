@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Login</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+/* Animación RGB para bordes */
+@keyframes rgb {
+    0% { border-color: red; }
+    16% { border-color: orange; }
+    33% { border-color: yellow; }
+    50% { border-color: green; }
+    66% { border-color: blue; }
+    83% { border-color: purple; }
+    100% { border-color: red; }
+}
+
+/* Estilo botones con RGB */
+.btn {
+    display: inline-block;
+    padding: 15px 25px;
+    font-size: 20px;
+    text-align: center;
+    background: black;
+    color: white;
+    border: 3px solid red;
+    border-radius: 10px;
+    cursor: pointer;
+    animation: rgb 4s infinite;
+    text-decoration: none;
+    margin: 10px;
+    width: 180px;
+}
+
+body {
+    background: black;
+    color: white;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.container {
+    text-align: center;
+}
+
+input {
+    padding: 15px;
+    font-size: 18px;
+    margin: 10px;
+    width: 250px;
+    text-align: center;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Login</h1>
+
+    <!-- Formulario de login -->
+    <form method="post">
+        <input name="u" placeholder="Usuario"><br>
+        <input name="p" type="password" placeholder="Contraseña"><br>
+        <button class="btn">Entrar</button>
+    </form>
+
+    <!-- Botón Registrarse con RGB -->
+    <a href="/register" class="btn">Registrarse</a>
+</div>
+
+</body>
+</html>

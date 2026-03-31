@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Letra Rápida</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+body {
+    margin: 0;
+    background: black;
+    color: white;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+.container {
+    text-align: center;
+    position: relative;
+}
+
+/* Botón volver al menú con luces RGB */
+.back-btn {
+    position: fixed;      /* siempre arriba */
+    top: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    background: black;
+    color: white;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 16px;
+    border: 3px solid white;
+    cursor: pointer;
+    overflow: hidden;
+    z-index: 9999;
+}
+
+/* Animación RGB en el borde */
+.back-btn::before {
+    content:"";
+    position:absolute;
+    inset:-2px;
+    background: linear-gradient(45deg, red, orange, yellow, green, cyan, blue, purple, red);
+    background-size:400%;
+    filter:blur(6px);
+    z-index:-1;
+    animation: rgb 5s linear infinite;
+    border-radius:12px;
+}
+
+.back-btn:hover { background-color:#222; }
+
+/* Animación clave RGB */
+@keyframes rgb {
+    0% { background-position:0 0; }
+    50% { background-position:300% 0; }
+    100% { background-position:0 0; }
+}
+
+/* Botón música - esquina izquierda */
+.music-btn {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    background: black;
+    border: 2px solid white;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 1000;
+}
+
+/* Letra grande */
+#letter-display {
+    font-size: 100px;
+    margin: 40px auto;
+}
+
+/* Botón iniciar */
+#start-btn {
+    padding: 12px 25px;
+    font-size: 18px;
+    background: black;
+    color: white;
+    border: 3px solid red;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-top: 20px;
+}
+#start-btn:hover {
+    transform: scale(1.05);
+}
+
+#result {
+    margin-top: 20px;
+    font-size: 24px;
+}
+
+</style>
+</head>
+<body>
+<audio id="music" loop autoplay></audio>
+
+<!-- Botón volver -->
+<a href="/menu" class="back-btn">Volver al Menú</a>
+
+<div class="container">
+    <h1>Letra Rápida</h1>
+    <p>Presiona la letra correcta antes de que cambie</p>
+
+    <div id="letter-display">A</div>
+    <button id="start-btn">Comenzar</button>
+    <p id="result"></p>
+</div>
+
+<audio id="music" loop>
+    <source src="/static/music.mp3">
+</audio>
+
+<script>
+const letterDisplay = document.getElementById("letter-display");
+const startBtn = document.getElementById("start-btn");
+const result = document.getElementById("result");
+const music = document.getElementById("music");
+
+function playMusic(){ music.play(); }
+
+let letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+let sequence = [];
+let userIndex = 0;
+let score = 0;
+let interval;
+let gameRunning = false;
+
+function nextLetter() {
+    if(userIndex >= 10){ // 🔥 verificar ANTES
+        endGame();
+        return;
+    }
+
+    const letter = letters[Math.floor(Math.random() * letters.length)];
+    letterDisplay.textContent = letter;
+    sequence.push(letter);
+
+    userIndex++;
+}
+
+function endGame(){
+    clearInterval(interval);
+    gameRunning = false;
+
+    let finalScore = score * 10; // 🔥 convierte a /100
+
+    result.textContent = `Puntaje: ${finalScore} / 100`;
+
+    fetch('/save/letter/' + finalScore);
+}
+
+startBtn.onclick = function(){
+    sequence = [];
+    userIndex = 0;
+    score = 0;
+    result.textContent = "";
+    gameRunning = true;
+
+    nextLetter();
+    interval = setInterval(() => {
+        if(gameRunning) nextLetter();
+    }, 850);
+};
+
+document.addEventListener("keydown", function(e){
+    if(!gameRunning) return;
+
+    const currentLetter = sequence[sequence.length-1];
+    if(e.key.toUpperCase() === currentLetter){
+        score++;
+        letterDisplay.style.color = "lime";
+    } else {
+        letterDisplay.style.color = "red";
+    }
+
+    setTimeout(()=>{letterDisplay.style.color="white";},300);
+});
+const audio = document.getElementById("music");
+const chosenSong = localStorage.getItem("chosenSong");
+
+// Solo reproducir si ya hay una canción elegida
+if(chosenSong){
+    audio.src = chosenSong;
+    audio.play();
+}
+
+// Función para elegir canción
+function chooseSong(song){
+    localStorage.setItem("chosenSong", song);
+    audio.src = song;
+    audio.play();
+}
+</script>
+
+</body>
+</html>

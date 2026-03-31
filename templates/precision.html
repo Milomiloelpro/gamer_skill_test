@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Prueba de Precisión</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+body {
+    margin: 0;
+    background: black;
+    color: white;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    text-align: center;
+    position: relative;
+}
+
+.back-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    background: black;
+    color: white;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 16px;
+    border: 3px solid white;
+    cursor: pointer;
+    overflow: hidden;
+    z-index: 9999;
+}
+.back-btn::before {
+    content:"";
+    position:absolute;
+    inset:-2px;
+    background: linear-gradient(45deg, red, orange, yellow, green, cyan, blue, purple, red);
+    background-size:400%;
+    filter:blur(6px);
+    z-index:-1;
+    animation: rgb 5s linear infinite;
+    border-radius:12px;
+}
+.back-btn:hover { background-color:#222; }
+
+#game-area {
+    position: relative;
+    width: 400px;
+    height: 400px;
+    border: 3px solid white;
+    margin: 20px auto;
+    background: white;
+}
+
+#target {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background: lime;
+    border-radius: 50%;
+    display: none;
+    cursor: pointer;
+}
+
+#start-btn {
+    padding: 12px 25px;
+    font-size: 18px;
+    background: black;
+    color: white;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-top: 15px;
+    position: relative;
+    overflow: hidden;
+}
+#start-btn::before {
+    content:"";
+    position:absolute;
+    inset:-2px;
+    background: linear-gradient(45deg, red, orange, yellow, green, cyan, blue, purple, red);
+    background-size:400%;
+    filter:blur(6px);
+    z-index:-1;
+    animation: rgb 5s linear infinite;
+    border-radius:12px;
+}
+
+#start-btn:hover { transform: scale(1.05); }
+
+@keyframes rgb {
+    0% { background-position:0 0; }
+    50% { background-position:300% 0; }
+    100% { background-position:0 0; }
+}
+
+#result {
+    font-size: 20px;
+    margin-top: 15px;
+}
+</style>
+</head>
+
+<body>
+<audio id="music" loop autoplay></audio>
+
+<a href="/menu" class="back-btn">Volver al Menú</a>
+
+<div class="container">
+    <h1>Prueba de Precisión</h1>
+    <p>Haz click en el círculo verde lo más cerca del centro posible</p>
+
+    <div id="game-area">
+        <div id="target"></div>
+    </div>
+
+    <button id="start-btn">Comenzar</button>
+    <p id="result"></p>
+</div>
+
+<script>
+const target = document.getElementById("target");
+const gameArea = document.getElementById("game-area");
+const resultText = document.getElementById("result");
+const startBtn = document.getElementById("start-btn");
+
+let attempts = 0;
+let totalScore = 0;
+const maxAttempts = 10;
+
+let size = 40; // 🔥 empieza más grande
+
+function moveCircle(){
+    const areaWidth = gameArea.clientWidth;
+    const areaHeight = gameArea.clientHeight;
+
+    target.style.width = size + "px";
+    target.style.height = size + "px";
+
+    const x = Math.random() * (areaWidth - size);
+    const y = Math.random() * (areaHeight - size);
+
+    target.style.left = x + "px";
+    target.style.top = y + "px";
+    target.style.display = "block";
+}
+
+startBtn.onclick = function(){
+    attempts = 0;
+    totalScore = 0;
+    size = 40; // 🔥 reinicia tamaño
+    resultText.textContent = "";
+    moveCircle();
+};
+
+target.onclick = function(e){
+    e.stopPropagation();
+    if(attempts >= maxAttempts) return;
+
+    attempts++;
+    totalScore += 10;
+
+    size -= 5;
+    if(size < 5) size = 5; // 🔥 ahora sí sigue bajando
+
+    if(attempts < maxAttempts){
+        moveCircle();
+    } else {
+        target.style.display = "none";
+        resultText.textContent = "Puntuación final: " + totalScore + " / 100";
+        fetch('/save/precision/'+totalScore);
+    }
+};
+
+gameArea.onclick = function(e){
+    if(e.target === target) return;
+    if(attempts >= maxAttempts) return;
+
+    attempts++;
+
+    size -= 5;
+    if(size < 5) size = 5;
+
+    if(attempts < maxAttempts){
+        moveCircle();
+    } else {
+        target.style.display = "none";
+        resultText.textContent = "Puntuación final: " + totalScore + " / 100";
+        fetch('/save/precision/'+totalScore);
+    }
+};
+const audio = document.getElementById("music");
+const chosenSong = localStorage.getItem("chosenSong");
+
+// Solo reproducir si ya hay una canción elegida
+if(chosenSong){
+    audio.src = chosenSong;
+    audio.play();
+}
+
+// Función para elegir canción
+function chooseSong(song){
+    localStorage.setItem("chosenSong", song);
+    audio.src = song;
+    audio.play();
+}
+</script>
+
+</body>
+</html>
+

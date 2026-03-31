@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        /* Fondo y centrado general */
+        body {
+            background: #000000;
+            color: rgb(255, 255, 255);
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 36px;
+            margin-bottom: 40px;
+        }
+
+        /* Botón volver con RGB */
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: black;
+            color: white;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 16px;
+            border: 3px solid white;
+            cursor: pointer;
+            overflow: hidden;
+            z-index: 9999;
+        }
+
+        .back-btn::before {
+            content:"";
+            position:absolute;
+            inset:-2px;
+            background: linear-gradient(45deg, red, orange, yellow, green, cyan, blue, purple, red);
+            background-size: 400%;
+            filter: blur(6px);
+            z-index:-1;
+            animation: rgb 5s linear infinite;
+            border-radius:12px;
+        }
+
+        /* Animación RGB */
+        @keyframes rgb {
+            0% {background-position: 0% 50%;}
+            50% {background-position: 100% 50%;}
+            100% {background-position: 0% 50%;}
+        }
+
+        /* Contenedor de botones */
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            max-width: 900px;
+        }
+
+        /* Botones con bordes RGB */
+        .btn {
+            position: relative;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 12px;
+            background: black;
+            color: white;
+            cursor: pointer;
+            border: 3px solid white;
+            overflow: hidden;
+            z-index: 1;
+            transition: color 0.3s, background 0.3s;
+        }
+
+        .btn::before {
+            content:"";
+            position: absolute;
+            inset: -3px;
+            background: linear-gradient(45deg, red, orange, yellow, green, cyan, blue, purple, red);
+            background-size: 400%;
+            filter: blur(6px);
+            z-index: -1;
+            border-radius: 15px;
+            animation: rgb 5s linear infinite;
+        }
+
+        .btn:hover {
+            background: white;
+            color: rgb(255, 255, 255);
+        }
+    </style>
+</head>
+<body>
+
+<a href="/menu" class="back-btn">Volver al Menú</a>
+
+<h1>Elige tu canción</h1>
+
+<audio id="music" loop></audio>
+
+<div class="container">
+    <button class="btn" onclick="chooseSong('/static/music.mp3')">Song 1</button>
+    <button class="btn" onclick="chooseSong('/static/music2.mp3')">Song 2</button>
+    <button class="btn" onclick="chooseSong('/static/music3.mp3')">Song 3</button>
+    <button class="btn" onclick="chooseSong('/static/music4.mp3')">Song 4</button>
+    <button class="btn" onclick="chooseSong('/static/music5.mp3')">Song 5</button>
+    <button class="btn" onclick="chooseSong('/static/music6.mp3')">Song 6</button>
+    <button class="btn" onclick="chooseSong('/static/music7.mp3')">Song 7</button>
+    <button class="btn" onclick="chooseSong('/static/music8.mp3')">Song 8</button>
+    <button class="btn" onclick="chooseSong('/static/music9.mp3')">Song 9</button>
+    <button class="btn" onclick="stopMusic()">Quit Song</button>
+
+<script>
+const audio = document.getElementById("music");
+const chosenSong = localStorage.getItem("chosenSong");
+if(chosenSong) audio.src = chosenSong;
+
+// Función para elegir canción
+function chooseSong(song){
+    localStorage.setItem("chosenSong", song);
+    audio.src = song;
+    audio.play();
+}
+
+// Función para quitar la música
+function stopMusic(){
+    localStorage.removeItem("chosenSong"); // borra la canción elegida
+    audio.pause();                          // pausa el audio
+    audio.src = "";                          // limpia la fuente
+}
+</script>
+
+</body>
+</html>

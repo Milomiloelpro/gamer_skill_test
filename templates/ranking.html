@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ranking Mundial</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<style>
+body {
+    background: black;
+    color: white;
+    font-family: Arial, sans-serif;
+    margin: 0;
+}
+
+/* 🔥 CONTENEDOR PRINCIPAL (ARREGLA TODO) */
+.main-container {
+    display: flex;
+    flex-direction: column; /* 👈 esto hace que TODO vaya vertical */
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+/* Título */
+h1 {
+    font-size: 50px;
+    margin-top: 40px;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px red;
+}
+
+/* 🔍 Buscador arriba */
+#search {
+    width: 600px;
+    padding: 14px;
+    margin: 20px 0 30px 0;
+    border-radius: 20px;
+    border: none;
+    font-size: 18px;
+    text-align: center;
+    outline: none;
+}
+
+/* Tabla */
+table {
+    width: 80%;
+    margin: 0 auto 30px auto;
+    border-collapse: collapse;
+    box-shadow: 0 0 15px rgb(244, 241, 241);
+}
+
+th, td {
+    padding: 15px;
+    border-bottom: 1px solid white;
+}
+
+th {
+    background-color: #444;
+}
+
+tr:nth-child(odd) { background-color: #222; }
+tr:nth-child(even) { background-color: #111; }
+
+tr:hover {
+    background-color: #ccccc6;
+    cursor: pointer;
+}
+
+/* Botón */
+.btn {
+    margin-bottom: 30px;
+    padding: 10px 25px;
+    background: black;
+    color: white;
+    border: 3px solid white;
+    border-radius: 10px;
+    text-decoration: none;
+}
+</style>
+</head>
+
+<body>
+<audio id="music" loop autoplay></audio>
+
+<div class="main-container">
+
+<h1>Ranking Mundial</h1>
+
+<!-- 🔥 AHORA SÍ ARRIBA -->
+<input type="text" id="search" placeholder="Buscar usuario..." onkeyup="searchUser()">
+
+<table>
+    <tr>
+        <th>Posición</th>
+        <th>Jugador</th>
+        <th>Promedio</th>
+    </tr>
+    {% for player in ranking %}
+    <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ player.username }}</td>
+        <td>{{ player.average }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<a href="{{ url_for('menu') }}" class="btn">Volver al Menú</a>
+
+</div>
+
+<script>
+function searchUser() {
+    let input = document.getElementById("search").value.toLowerCase();
+    let rows = document.querySelectorAll("table tr");
+
+    rows.forEach((row, index) => {
+        if(index === 0) return;
+
+        let username = row.cells[1].textContent.toLowerCase();
+
+        if(username.includes(input)){
+            row.style.display = "";
+        } else {
+            row.style.display = "none";
+        }
+    });
+}
+const audio = document.getElementById("music");
+const chosenSong = localStorage.getItem("chosenSong");
+
+// Solo reproducir si ya hay una canción elegida
+if(chosenSong){
+    audio.src = chosenSong;
+    audio.play();
+}
+
+// Función para elegir canción
+function chooseSong(song){
+    localStorage.setItem("chosenSong", song);
+    audio.src = song;
+    audio.play();
+}
+</script>
+
+</body>
+</html>
+
