@@ -5,7 +5,6 @@
 <title>Login</title>
 <link rel="stylesheet" href="/static/style.css">
 <style>
-/* Animación RGB para bordes */
 @keyframes rgb {
     0% { border-color: red; }
     16% { border-color: orange; }
@@ -16,7 +15,6 @@
     100% { border-color: red; }
 }
 
-/* Estilo botones con RGB */
 .btn {
     display: inline-block;
     padding: 15px 25px;
@@ -55,6 +53,13 @@ input {
     width: 250px;
     text-align: center;
 }
+
+/* 🔴 error */
+.error {
+    color: red;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
 </style>
 </head>
 <body>
@@ -62,14 +67,19 @@ input {
 <div class="container">
     <h1>Login</h1>
 
+    <!-- 🔴 MENSAJE DE ERROR -->
+    {% if error %}
+    <p class="error">{{ error }}</p>
+    {% endif %}
+
     <!-- Formulario de login -->
     <form method="post">
-        <input name="u" placeholder="Usuario"><br>
-        <input name="p" type="password" placeholder="Contraseña"><br>
+        <input name="u" placeholder="Usuario" required><br>
+        <input name="p" type="password" placeholder="Contraseña" required><br>
         <button class="btn">Entrar</button>
     </form>
 
-    <!-- Botón Registrarse con RGB -->
+    <!-- Botón Registrarse -->
     <a href="/register" class="btn">Registrarse</a>
 </div>
 
